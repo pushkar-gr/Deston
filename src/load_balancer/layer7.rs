@@ -78,7 +78,7 @@ impl Layer7 {
 }
 
 impl load_balancer::LoadBalancer for Layer7 {
-    //creates and retus a new Layer7 load balancer
+    //creates and returns a new Layer7 load balancer
     fn new() -> Self {
         Layer7
     }
