@@ -87,7 +87,6 @@ impl load_balancer::LoadBalancer for Layer7 {
     //will listen to incoming requests at given address and calls handle_request to forward request to a server
     async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         //load balancer address
-        println!("EEE");
         let lb_address = "http://127.0.0.1:8000".parse::<Uri>().unwrap();
         let host = lb_address.host().unwrap();
         let port = lb_address.port_u16().unwrap();
