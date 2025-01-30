@@ -1,22 +1,22 @@
 use std::sync::{Arc, Mutex};
-
+//basic structure
 struct RoundRobin {
     servers: Vec<String>,
-    index: Mutex<usize>,
+    idx: Mutex<usize>,
 }
 
 impl RoundRobin{
     fn new(servers: Vec<String>) -> Arc<Self> {
         Arc::new(Self {
             servers,
-            index: Mutex::new(0),
+            idx: Mutex::new(0),
         })
     }
-
+//basic round-robin routing
     fn next_server(&self) -> String {
-        let mut index = self.index.lock().unwrap();
-        let server = self.servers[*index].clone();
-        *index = (*index + 1) % self.servers.len();
+        let mut idx = self.idx.lock().unwrap();
+        let server = self.servers[*idx].clone();
+        *idx = (*idx + 1) % self.servers.len();
         server
     }
 }
