@@ -35,12 +35,14 @@ impl Server {
         server: SyncServer,
         client_stream: TcpStream,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        //extract the inner Server instance by consuming the Arc and Mutex
-        let server_locked = Arc::into_inner(server).unwrap().into_inner().unwrap();
+        //get host and port value from server
+        let (host, port) = {
+            let server_locked = server.lock().unwrap();
+            (server_locked.host.clone(), server_locked.port)
+        };
 
         //create a new server stream
-        let server_stream =
-            TcpStream::connect((server_locked.host.as_str(), server_locked.port)).await?;
+        let server_stream = TcpStream::connect((host.as_str(), port)).await?;
 
         //split server and client streams into read and write streams
         let (mut client_read, mut client_write) = split(client_stream);
@@ -71,13 +73,20 @@ impl Server {
         mut req: Request<Incoming>,
         addr: SocketAddr,
     ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-        //extract the inner Server instance by consuming the Arc and Mutex
-        let server_locked = Arc::into_inner(server).unwrap().into_inner().unwrap();
+        //get host, port and uri value from server
+        let (host, port, uri) = {
+            let server_locked = server.lock().unwrap();
+            (
+                server_locked.host.clone(),
+                server_locked.port,
+                server_locked.uri.clone(),
+            )
+        };
 
         //update the headers
         let headers = req.headers_mut();
         //update host in header
-        let new_host_header = HeaderValue::from_str(server_locked.host.as_str()).unwrap();
+        let new_host_header = HeaderValue::from_str(host.as_str()).unwrap();
         headers.insert("host", new_host_header);
         //add FORWARDED to the headers
         headers.insert(
@@ -90,7 +99,7 @@ impl Server {
                     //for: client address
                     addr,
                     //host: server address
-                    server_locked.uri.to_string(),
+                    uri.to_string(),
                     //prototype: http1
                     "http1"
                 )
@@ -100,9 +109,7 @@ impl Server {
         );
 
         //create a new stream to communicate with server
-        let stream = TcpStream::connect((server_locked.host.as_str(), server_locked.port))
-            .await
-            .unwrap();
+        let stream = TcpStream::connect((host.as_str(), port)).await.unwrap();
         let io = TokioIo::new(stream);
 
         //create an Hyper client
