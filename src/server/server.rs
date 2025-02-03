@@ -6,6 +6,7 @@ use hyper::{Request, Response, Uri};
 use hyper_util::rt::TokioIo;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
+use std::time::SystemTime;
 use tokio::io::{copy, split, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::try_join;
@@ -15,9 +16,23 @@ pub type SyncServer = Arc<Mutex<Server>>;
 
 #[derive(Clone)]
 pub struct Server {
-    host: String,
-    port: u16,
-    uri: Uri,
+    uri: Uri,     //uri of server
+    host: String, //hostname of server
+    port: u16,    //port at which server is running
+
+    max_connections: u32,        //max connections server can handle
+    connections: u32,            //number of alive connections
+    total_connections: u32,      //total connections server has served
+    successful_connections: u32, //total successful connections server has sesrved
+    failed_connections: u32,     //total failed connections
+
+    last_request_time: SystemTime, //time of latest request
+    last_health_check: SystemTime, //time of latest health check
+
+    response_time: f64,     //last response time
+    avg_response_time: f64, //avegage response time
+
+    is_alive: bool, //is server alive?
 }
 
 impl Server {
@@ -27,6 +42,20 @@ impl Server {
             host: uri.host().unwrap().to_string(),
             port: uri.port_u16().unwrap(),
             uri: uri,
+
+            max_connections: 100,
+            connections: 0,
+            total_connections: 0,
+            successful_connections: 0,
+            failed_connections: 0,
+
+            last_request_time: SystemTime::now(),
+            last_health_check: SystemTime::now(),
+
+            response_time: 0.0,
+            avg_response_time: 0.0,
+
+            is_alive: true,
         }
     }
 
