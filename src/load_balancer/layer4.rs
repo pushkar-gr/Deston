@@ -1,3 +1,5 @@
+//defines the Layer4 load balancer that implements the LoadBalancer trait. It manages multiple backend servers and handles Layer 4 (transport layer) requests. The load balancer listens for incoming connections, picks an appropriate server, and transfers data between the client and the selected server
+
 use hyper::Uri;
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;

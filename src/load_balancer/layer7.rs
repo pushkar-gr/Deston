@@ -1,3 +1,5 @@
+//defines the Layer 7 Load Balancer that implements the LoadBalancer trait. It listens for incoming HTTP requests, selects an appropriate server, and forwards the requests to the chosen server
+
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::Uri;

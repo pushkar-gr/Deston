@@ -1,3 +1,5 @@
+//defines the Server struct and methods for creating servers, handling data transfers between clients and servers, and forwarding HTTP requests
+
 use http::header::{HeaderValue, FORWARDED};
 use http_body_util::{combinators::BoxBody, BodyExt};
 use hyper::body::{Bytes, Incoming};
