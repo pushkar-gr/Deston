@@ -1,90 +1,29 @@
-use http::header::{HeaderValue, FORWARDED};
-use http_body_util::{combinators::BoxBody, BodyExt};
-use hyper::body::{Bytes, Incoming};
-use hyper::client::conn::http1::Builder;
+//defines the Layer 7 Load Balancer that implements the LoadBalancer trait. It listens for incoming HTTP requests, selects an appropriate server, and forwards the requests to the chosen server
+
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
-use hyper::{Request, Response, Uri};
+use hyper::Uri;
 use hyper_util::rt::TokioIo;
-use std::net::SocketAddr;
-use tokio::net::{TcpListener, TcpStream};
+use std::sync::{Arc, Mutex};
+use tokio::net::TcpListener;
 
-use crate::load_balancer::load_balancer;
+use crate::load_balancer::load_balancer::LoadBalancer;
+use crate::server::server::{Server, SyncServer};
 
-pub struct Layer7;
-
-impl Layer7 {
-    //handle_request handles incoming request and forwards it to a server
-    //picks a server based on algorithm
-    //returns the response from the server
-    async fn handle_request(
-        mut req: Request<Incoming>,
-        addr: SocketAddr,
-    ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-        //server address
-        //!todo: pick the server based on an algorithm
-        let server_uri = "http://127.0.0.1:3000".parse::<Uri>().unwrap();
-        let host = server_uri.host().unwrap();
-        let port = server_uri.port_u16().unwrap();
-
-        //update the headers
-        let headers = req.headers_mut();
-        //update host in header
-        let new_host_header = HeaderValue::from_str(host).unwrap();
-        headers.insert("host", new_host_header);
-        //add FORWARDED to the headers
-        headers.insert(
-            FORWARDED,
-            HeaderValue::from_str(
-                format!(
-                    "by={}; for={}; host={}; proto={}",
-                    //by: load balancer address
-                    "127.0.0.1:8000",
-                    //for: client address
-                    addr,
-                    //host: server address
-                    server_uri.to_string(),
-                    //proto
-                    "http1"
-                )
-                .as_str(),
-            )
-            .unwrap(),
-        );
-
-        let stream = TcpStream::connect((host, port)).await.unwrap();
-        let io = TokioIo::new(stream);
-
-        //create an Hyper client
-        let (mut sender, conn) = Builder::new()
-            .preserve_header_case(true)
-            .title_case_headers(true)
-            .handshake(io)
-            .await?;
-
-        //spawn a task to poll the connection
-        tokio::task::spawn(async move {
-            if let Err(err) = conn.await {
-                println!("Connection failed: {:?}", err);
-            }
-        });
-
-        //await the server response
-        let resp = sender.send_request(req).await?;
-
-        //convert Incoming into BoxBody and return the response
-        Ok(resp.map(|b| b.boxed()))
-    }
+pub struct Layer7 {
+    servers: Arc<Mutex<Vec<SyncServer>>>,
 }
 
-impl load_balancer::LoadBalancer for Layer7 {
+impl LoadBalancer for Layer7 {
     //creates and returns a new Layer7 load balancer
-    fn new() -> Self {
-        Layer7
+    fn new(servers: Arc<Mutex<Vec<SyncServer>>>) -> Self {
+        Layer7 { servers }
     }
 
-    //start_layer7 starts layer 7 load balancer
-    //will listen to incoming requests at given address and calls handle_request to forward request to a server
+    //starts layer 7 load balancer
+    //will listen to incoming requests at given address
+    //calls pick_server to pick a server when user sends a request
+    //calls Server::handle_request to forward request to the server
     async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         //load balancer address
         let lb_address = "http://127.0.0.1:8000".parse::<Uri>().unwrap();
@@ -96,8 +35,12 @@ impl load_balancer::LoadBalancer for Layer7 {
 
         //loop to continuously accetp incoming connections
         loop {
+            //accept incoming connections
             let (stream, addr) = listener.accept().await?;
             let io = TokioIo::new(stream);
+
+            //clone the server list to safely share across multiple threads
+            let servers_clone = self.servers.clone();
 
             //spawn a tokio task to server multiple connections concurrently
             tokio::task::spawn(async move {
@@ -105,7 +48,20 @@ impl load_balancer::LoadBalancer for Layer7 {
                     .preserve_header_case(true)
                     .title_case_headers(true)
                     //bind the incoming connection to handle_request
-                    .serve_connection(io, service_fn(move |req| Layer7::handle_request(req, addr)))
+                    .serve_connection(
+                        io,
+                        service_fn(move |req| {
+                            //clone the server list to safely share across multiple threads
+                            let servers_clone = servers_clone.clone();
+                            async move {
+                                //pick a server
+                                let server =
+                                    Layer7::pick_server(servers_clone).await.expect("No server");
+                                //call Server::handle_request to forward the request to server
+                                Server::handle_request(server, req, addr).await
+                            }
+                        }),
+                    )
                     .await
                 {
                     eprintln!("Error serving connection: {:?}", err);
@@ -114,5 +70,6 @@ impl load_balancer::LoadBalancer for Layer7 {
         }
     }
 
+    //stops layer 7 load balancer
     fn stop(&self) {}
 }
