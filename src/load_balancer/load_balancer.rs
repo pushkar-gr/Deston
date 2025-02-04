@@ -2,11 +2,11 @@
 
 use std::sync::{Arc, Mutex};
 
-use crate::server::server::SyncServer;
+use crate::server::server::{SyncServer, SyncServers};
 
 pub trait LoadBalancer {
     //returns a LoadBalancer
-    fn new(servers: Arc<Mutex<Vec<SyncServer>>>) -> Self;
+    fn new(servers: SyncServers) -> Self;
 
     //starts the load balancer
     async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
@@ -14,7 +14,7 @@ pub trait LoadBalancer {
     //picks a server based on algo to handle incoming request
     //returns an option of server if server available
     //returns None if no servers are available
-    async fn pick_server(servers: Arc<Mutex<Vec<SyncServer>>>) -> Option<SyncServer> {
+    async fn pick_server(servers: SyncServers) -> Option<SyncServer> {
         //lock servers to perform actions
         let locked_servers = servers.lock().unwrap();
 

@@ -8,15 +8,15 @@ use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 
 use crate::load_balancer::load_balancer::LoadBalancer;
-use crate::server::server::{Server, SyncServer};
+use crate::server::server::{Server, SyncServer, SyncServers};
 
 pub struct Layer7 {
-    servers: Arc<Mutex<Vec<SyncServer>>>,
+    servers: SyncServers,
 }
 
 impl LoadBalancer for Layer7 {
     //creates and returns a new Layer7 load balancer
-    fn new(servers: Arc<Mutex<Vec<SyncServer>>>) -> Self {
+    fn new(servers: SyncServers) -> Self {
         Layer7 { servers }
     }
 

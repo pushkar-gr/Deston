@@ -5,10 +5,10 @@ use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 
 use crate::load_balancer::load_balancer;
-use crate::server::server::{Server, SyncServer};
+use crate::server::server::{Server, SyncServer, SyncServers};
 
 pub struct Layer4 {
-    servers: Arc<Mutex<Vec<SyncServer>>>,
+    servers: SyncServers,
 }
 
 impl load_balancer::LoadBalancer for Layer4 {
