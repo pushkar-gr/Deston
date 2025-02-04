@@ -35,6 +35,8 @@ pub struct Server {
     avg_response_time: f64, //avegage response time
 
     is_alive: bool, //is server alive?
+
+    weight: f32, //for weighted algorithms
 }
 
 impl Server {
@@ -58,6 +60,8 @@ impl Server {
             avg_response_time: 0.0,
 
             is_alive: true,
+
+            weight: 1.0,
         }
     }
 
