@@ -1,13 +1,13 @@
 use std::sync::MutexGuard;
 
-use crate::load_balancer::algorithm::algorithm;
+use crate::load_balancer::algorithm::algorithm::Algorithm;
 use crate::server::server::SyncServer;
 
 pub struct RoundRobin {
     index: usize,
 }
 
-impl algorithm::Algorithm for RoundRobin {
+impl Algorithm for RoundRobin {
     //creates and returns new RoundRobin
     fn new() -> Self
     where
