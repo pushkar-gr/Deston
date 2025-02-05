@@ -1,25 +1,30 @@
-use std::sync::{Arc, Mutex};
-//basic structure
-struct RoundRobin {
-    servers: Vec<String>,
-    idx: Mutex<usize>,
+use std::sync::MutexGuard;
+
+use crate::load_balancer::algorithm::algorithm;
+use crate::server::server::SyncServer;
+
+pub struct RoundRobin {
+    index: usize,
 }
 
-impl RoundRobin{
-    fn new(servers: Vec<String>) -> Arc<Self> {
-        Arc::new(Self {
-            servers,
-            idx: Mutex::new(0),
-        })
+impl algorithm::Algorithm for RoundRobin {
+    //creates and returns new RoundRobin
+    fn new() -> Self
+    where
+        Self: Sized,
+    {
+        RoundRobin { index: 0 }
     }
-//basic round-robin routing
-    fn next_server(&self) -> String {
-        let mut idx = self.idx.lock().unwrap();
-        let server = self.servers[*idx].clone();
-        *idx = (*idx + 1) % self.servers.len();
-        server
+
+    //picks next server
+    //picks server at index, increments index and returns the index and server
+    fn pick_server(&mut self, servers: MutexGuard<Vec<SyncServer>>) -> Option<(usize, SyncServer)> {
+        //pick server
+        let server = servers[self.index].clone();
+        let index = self.index;
+        //incriment index
+        self.index = (self.index + 1) % servers.len();
+        //return index and server
+        Some((index, server))
     }
 }
-
-
-

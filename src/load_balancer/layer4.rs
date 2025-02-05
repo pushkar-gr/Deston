@@ -1,20 +1,20 @@
 //defines the Layer4 load balancer that implements the LoadBalancer trait. It manages multiple backend servers and handles Layer 4 (transport layer) requests. The load balancer listens for incoming connections, picks an appropriate server, and transfers data between the client and the selected server
 
 use hyper::Uri;
-use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 
+use crate::config::config::SyncConfig;
 use crate::load_balancer::load_balancer;
-use crate::server::server::{Server, SyncServer, SyncServers};
+use crate::server::server::Server;
 
 pub struct Layer4 {
-    servers: SyncServers,
+    config: SyncConfig,
 }
 
 impl load_balancer::LoadBalancer for Layer4 {
     //creates and returns a new Layer4 load balancer
-    fn new(servers: Arc<std::sync::Mutex<Vec<SyncServer>>>) -> Self {
-        Layer4 { servers }
+    fn new(config: SyncConfig) -> Self {
+        Layer4 { config }
     }
 
     //starts layer 4 load balancer
@@ -35,11 +35,13 @@ impl load_balancer::LoadBalancer for Layer4 {
             //accept incoming connections
             let (stream, _) = listener.accept().await?;
 
+            //clone the server list to safely share across multiple threads
+            let config_clone = self.config.clone();
+
             //spawn a tokio task to server multiple connections concurrently
-            let clone = self.servers.clone();
             tokio::task::spawn(async move {
                 //pick a server
-                let server = Layer4::pick_server(clone).await.expect("No server");
+                let server = Layer4::pick_server(config_clone).await.expect("No server");
                 //call Server::transfer_data to transfer data between server and client
                 if let Err(err) = Server::transfer_data(server, stream).await {
                     eprintln!("Error transfering data {:?}", err);

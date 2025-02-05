@@ -1,12 +1,11 @@
 //defines load balancer trait, it provies the blueprint for creating, starting and stopping load balancer. With a method to pick the next server based on given algo
 
-use std::sync::{Arc, Mutex};
-
-use crate::server::server::{SyncServer, SyncServers};
+use crate::config::config::SyncConfig;
+use crate::server::server::SyncServer;
 
 pub trait LoadBalancer {
     //returns a LoadBalancer
-    fn new(servers: SyncServers) -> Self;
+    fn new(config: SyncConfig) -> Self;
 
     //starts the load balancer
     async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
@@ -14,13 +13,20 @@ pub trait LoadBalancer {
     //picks a server based on algo to handle incoming request
     //returns an option of server if server available
     //returns None if no servers are available
-    async fn pick_server(servers: SyncServers) -> Option<SyncServer> {
-        //lock servers to perform actions
-        let locked_servers = servers.lock().unwrap();
-
-        //pick a server
-        //*!todo: use specified algorithm to pick the server
-        Some(locked_servers[0].clone())
+    async fn pick_server(config: SyncConfig) -> Option<SyncServer> {
+        //lock config
+        let mut config = config.lock().unwrap();
+        //lock algorithm object
+        let algorithm_object = config.algorithm_object.clone();
+        let mut algorithm = algorithm_object.lock().unwrap();
+        //lock servers
+        let servers = config.servers.lock().unwrap();
+        //call AlgoRithm::pick_server and return the server
+        let (index, server) = algorithm.pick_server(servers).unwrap();
+        //update index
+        config.last_picked_index = index;
+        //return picked server
+        Some(server)
     }
 
     //stops the load balancer
