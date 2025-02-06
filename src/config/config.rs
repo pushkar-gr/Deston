@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::load_balancer::algorithm::algorithm::Algorithm as AlgorithmTrait;
 use crate::load_balancer::algorithm::r#static::round_robin::RoundRobin;
-use crate::server::server::SyncServers;
+use crate::server::server::SyncServer;
 
 //type alias for a thread-safe, synchronized Config using Arc and Mutex
 pub type SyncConfig = Arc<Mutex<Config>>;
@@ -13,20 +13,20 @@ pub enum Algorithm {
 }
 
 pub struct Config {
-    pub servers: SyncServers,     //thread safe vector of servers
-    pub algorithm: Algorithm,     //algorithm to pick server
-    pub last_picked_index: usize, //index of last picked server
-    pub algorithm_object: Arc<Mutex<dyn AlgorithmTrait>>, //thread safe algorithm object
+    pub servers: Arc<Vec<SyncServer>>, //thread safe vector of servers
+    pub algorithm: Algorithm,          //algorithm to pick server
+    pub last_picked_index: usize,      //index of last picked server
+    pub algorithm_object: Box<dyn AlgorithmTrait>, //algorithm object
 }
 
 impl Config {
     //creates and returns a new Config
-    pub fn new(servers: SyncServers, algorithm: Algorithm) -> Self {
+    pub fn new(servers: Arc<Vec<SyncServer>>, algorithm: Algorithm) -> Self {
         Config {
-            servers: servers.clone(),
+            last_picked_index: servers.len(),
+            servers: servers,
             algorithm: algorithm,
-            last_picked_index: servers.lock().unwrap().len(),
-            algorithm_object: Arc::new(Mutex::new(RoundRobin::new())),
+            algorithm_object: Box::new(RoundRobin::new()),
         }
     }
 }

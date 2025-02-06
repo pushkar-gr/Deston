@@ -15,8 +15,6 @@ use tokio::try_join;
 
 //type alias for a thread-safe, synchronized Server using Arc and Mutex
 pub type SyncServer = Arc<Mutex<Server>>;
-//type alias for a thread-safe, synchronized Servers using Arc and Mutex
-pub type SyncServers = Arc<Mutex<Vec<SyncServer>>>;
 
 #[derive(Clone)]
 pub struct Server {

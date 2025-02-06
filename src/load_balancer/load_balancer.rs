@@ -16,13 +16,10 @@ pub trait LoadBalancer {
     async fn pick_server(config: SyncConfig) -> Option<SyncServer> {
         //lock config
         let mut config = config.lock().unwrap();
-        //lock algorithm object
-        let algorithm_object = config.algorithm_object.clone();
-        let mut algorithm = algorithm_object.lock().unwrap();
-        //lock servers
-        let servers = config.servers.lock().unwrap();
+        //get servers
+        let servers = config.servers.clone();
         //call AlgoRithm::pick_server and return the server
-        let (index, server) = algorithm.pick_server(servers).unwrap();
+        let (index, server) = config.algorithm_object.pick_server(servers).unwrap();
         //update index
         config.last_picked_index = index;
         //return picked server
