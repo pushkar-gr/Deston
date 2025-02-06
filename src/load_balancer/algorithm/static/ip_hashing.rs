@@ -30,7 +30,7 @@ impl Algorithm for IpHashing {
         let result = hasher.finalize();
         //get index from result
         let index =
-            (usize::from_be_bytes(result[0..8].try_into().unwrap()) as usize) % servers.len();
+            (usize::from_be_bytes(result[0..8].try_into().unwrap())) % servers.len();
         //return index and server
         Some((index, servers[index].clone()))
     }
