@@ -36,7 +36,7 @@ pub struct Server {
 
     is_alive: bool, //is server alive?
 
-    weight: f32, //for weighted algorithms
+    pub weight: usize, //for weighted algorithms
 }
 
 impl Server {
@@ -61,7 +61,7 @@ impl Server {
 
             is_alive: true,
 
-            weight: 1.0,
+            weight: 1,
         }
     }
 

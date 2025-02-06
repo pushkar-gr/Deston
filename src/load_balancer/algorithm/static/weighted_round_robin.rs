@@ -1,41 +1,43 @@
-
+use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-//basic structure
-struct Server {
-    name: String,
-    weight: usize,
-}
-//basic structure:weight_rounded_robin
-struct Weight_rr {
-    servers: Vec<Server>,
-    idx: Mutex<usize>,
-    curr_weight: Mutex<usize>,
+
+use crate::load_balancer::algorithm::algorithm::Algorithm;
+use crate::server::server::SyncServer;
+
+pub struct WeightedRoundRobin {
+    index: usize,
+    curr_weight: usize,
 }
 
-impl Weight_rr {
-    fn new(servers: Vec<(String, usize)>) -> Arc<Self> {
-        let servers = servers.into_iter()
-            .map(|(name, weight)| Server { name, weight })
-            .collect();
-        Arc::new(Self {
-            servers,
-            idx: Mutex::new(0),
-            curr_weight: Mutex::new(0),
-        })
+impl Algorithm for WeightedRoundRobin {
+    //creates and returns new WeightedRoundRobin
+    fn new() -> Self {
+        Self {
+            index: 0,
+            curr_weight: 0,
+        }
     }
-//Servers with higher weights are given a larger proportion of the requests.
-    fn next_server(&self) -> String {
-        let mut idx = self.idx.lock().unwrap();
-        let mut curr_weight = self.curr_weight.lock().unwrap();
 
+    //picks next server
+    //picks server at index wtr to weight, increments index and returns the index and server
+    fn pick_server(
+        &mut self,
+        servers: Arc<Vec<SyncServer>>,
+        _: SocketAddr,
+    ) -> Option<(usize, SyncServer)> {
         loop {
-            let server = &self.servers[*idx];   
-            if *curr_weight < server.weight {
-                *curr_weight += 1;
-                return server.name.clone();
+            //get server
+            let server = &servers[self.index];
+            //get weight of server
+            let server_weight = { server.lock().unwrap().weight };
+
+            if self.curr_weight < server_weight {
+                self.curr_weight += 1;
+                return Some((self.index, server.clone()));
             }
-            *curr_weight = 0;
-            *idx = (*idx + 1) % self.servers.len();
+            //reset weight and move to next server
+            self.curr_weight = 0;
+            self.index = (self.index + 1) % servers.len();
         }
     }
 }
