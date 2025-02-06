@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::load_balancer::algorithm::algorithm::Algorithm as AlgorithmTrait;
 use crate::load_balancer::algorithm::r#static::round_robin::RoundRobin;
+use crate::load_balancer::algorithm::r#static::ip_hashing::IpHashing;
 use crate::server::server::SyncServer;
 
 //type alias for a thread-safe, synchronized Config using Arc and Mutex
@@ -26,7 +27,7 @@ impl Config {
             last_picked_index: servers.len(),
             servers: servers,
             algorithm: algorithm,
-            algorithm_object: Box::new(RoundRobin::new()),
+            algorithm_object: Box::new(IpHashing::new()),
         }
     }
 }
