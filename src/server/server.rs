@@ -42,7 +42,7 @@ pub struct Server {
 impl Server {
     //creates and returns a new server
     pub fn new(uri: Uri) -> Self {
-        Server {
+        Self {
             host: uri.host().unwrap().to_string(),
             port: uri.port_u16().unwrap(),
             uri: uri,

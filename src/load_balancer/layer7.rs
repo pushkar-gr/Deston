@@ -17,7 +17,7 @@ pub struct Layer7 {
 impl LoadBalancer for Layer7 {
     //creates and returns a new Layer7 load balancer
     fn new(config: SyncConfig) -> Self {
-        Layer7 { config }
+        Self { config }
     }
 
     //starts layer 7 load balancer
@@ -57,7 +57,7 @@ impl LoadBalancer for Layer7 {
                                 //pick a server
                                 let config_clone = config_clone.clone();
                                 let server =
-                                    Layer7::pick_server(config_clone).await.expect("No server");
+                                    Self::pick_server(config_clone).await.expect("No server");
                                 //call Server::handle_request to forward the request to server
                                 Server::handle_request(server, req, addr).await
                             }

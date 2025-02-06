@@ -13,7 +13,7 @@ impl Algorithm for RoundRobin {
     where
         Self: Sized,
     {
-        RoundRobin { index: 0 }
+        Self { index: 0 }
     }
 
     //picks next server

@@ -22,7 +22,7 @@ pub struct Config {
 impl Config {
     //creates and returns a new Config
     pub fn new(servers: Arc<Vec<SyncServer>>, algorithm: Algorithm) -> Self {
-        Config {
+        Self {
             last_picked_index: servers.len(),
             servers: servers,
             algorithm: algorithm,

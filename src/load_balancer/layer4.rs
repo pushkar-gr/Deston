@@ -14,7 +14,7 @@ pub struct Layer4 {
 impl load_balancer::LoadBalancer for Layer4 {
     //creates and returns a new Layer4 load balancer
     fn new(config: SyncConfig) -> Self {
-        Layer4 { config }
+        Self { config }
     }
 
     //starts layer 4 load balancer
@@ -41,7 +41,7 @@ impl load_balancer::LoadBalancer for Layer4 {
             //spawn a tokio task to server multiple connections concurrently
             tokio::task::spawn(async move {
                 //pick a server
-                let server = Layer4::pick_server(config_clone).await.expect("No server");
+                let server = Self::pick_server(config_clone).await.expect("No server");
                 //call Server::transfer_data to transfer data between server and client
                 if let Err(err) = Server::transfer_data(server, stream).await {
                     eprintln!("Error transfering data {:?}", err);
