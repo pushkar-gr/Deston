@@ -1,4 +1,5 @@
 use crate::Arc;
+use std::net::SocketAddr;
 
 use crate::load_balancer::algorithm::algorithm::Algorithm;
 use crate::server::server::SyncServer;
@@ -18,7 +19,11 @@ impl Algorithm for RoundRobin {
 
     //picks next server
     //picks server at index, increments index and returns the index and server
-    fn pick_server(&mut self, servers: Arc<Vec<SyncServer>>) -> Option<(usize, SyncServer)> {
+    fn pick_server(
+        &mut self,
+        servers: Arc<Vec<SyncServer>>,
+        _: SocketAddr,
+    ) -> Option<(usize, SyncServer)> {
         //pick server
         let server = servers[self.index].clone();
         let index = self.index;

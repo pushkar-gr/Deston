@@ -56,8 +56,9 @@ impl LoadBalancer for Layer7 {
                             async move {
                                 //pick a server
                                 let config_clone = config_clone.clone();
-                                let server =
-                                    Self::pick_server(config_clone).await.expect("No server");
+                                let server = Self::pick_server(config_clone, addr)
+                                    .await
+                                    .expect("No server");
                                 //call Server::handle_request to forward the request to server
                                 Server::handle_request(server, req, addr).await
                             }

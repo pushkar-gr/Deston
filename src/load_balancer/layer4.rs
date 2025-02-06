@@ -33,7 +33,7 @@ impl load_balancer::LoadBalancer for Layer4 {
         //loop to continuously accetp incoming connections
         loop {
             //accept incoming connections
-            let (stream, _) = listener.accept().await?;
+            let (stream, addr) = listener.accept().await?;
 
             //clone the server list to safely share across multiple threads
             let config_clone = self.config.clone();
@@ -41,7 +41,9 @@ impl load_balancer::LoadBalancer for Layer4 {
             //spawn a tokio task to server multiple connections concurrently
             tokio::task::spawn(async move {
                 //pick a server
-                let server = Self::pick_server(config_clone).await.expect("No server");
+                let server = Self::pick_server(config_clone, addr)
+                    .await
+                    .expect("No server");
                 //call Server::transfer_data to transfer data between server and client
                 if let Err(err) = Server::transfer_data(server, stream).await {
                     eprintln!("Error transfering data {:?}", err);
