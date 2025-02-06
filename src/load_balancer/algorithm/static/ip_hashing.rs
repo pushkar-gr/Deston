@@ -8,7 +8,7 @@ use crate::server::server::SyncServer;
 pub struct IpHashing {}
 
 impl Algorithm for IpHashing {
-    //creates and returns new RoundRobin
+    //creates and returns new IpHashing
     fn new() -> Self
     where
         Self: Sized,
@@ -29,8 +29,7 @@ impl Algorithm for IpHashing {
         hasher.update(client_addr.to_string().as_bytes());
         let result = hasher.finalize();
         //get index from result
-        let index =
-            (usize::from_be_bytes(result[0..8].try_into().unwrap())) % servers.len();
+        let index = (usize::from_be_bytes(result[0..8].try_into().unwrap())) % servers.len();
         //return index and server
         Some((index, servers[index].clone()))
     }
