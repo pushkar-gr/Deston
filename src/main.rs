@@ -12,9 +12,13 @@ use std::sync::{Arc, Mutex};
 
 #[tokio::main]
 async fn main() {
-    let server = Server::new("http://127.0.0.1:3001".parse::<Uri>().unwrap());
+    let server1 = Server::new("http://127.0.0.1:3000".parse::<Uri>().unwrap());
+    let server2 = Server::new("http://127.0.0.1:3001".parse::<Uri>().unwrap());
     let config = Config::new(
-        Arc::new(vec![Arc::new(Mutex::new(server))]),
+        Arc::new(vec![
+            Arc::new(Mutex::new(server1)),
+            Arc::new(Mutex::new(server2)),
+        ]),
         Algorithm::RoundRobin,
     );
     //let lb = Layer7::new(Arc::new(Mutex::new(config)));

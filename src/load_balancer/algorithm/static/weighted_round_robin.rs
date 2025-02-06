@@ -1,5 +1,5 @@
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use crate::load_balancer::algorithm::algorithm::Algorithm;
 use crate::server::server::SyncServer;
