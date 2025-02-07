@@ -39,39 +39,35 @@ impl Config {
         //parese config file contents
         let values = contents.parse::<Table>().unwrap();
 
-        //get host name of load balancer
-        let load_balancer_host = {
-            if let Value::String(address) =
-                values.get("load_balancer").unwrap().get("address").unwrap()
-            {
-                address
+        //get host name, port and algorithm of load balancer
+        let (load_balancer_host, load_balancer_port, algorithm) = {
+            if let Some(table) = values.get("load_balancer") {
+                let host = {
+                    if let Some(Value::String(address)) = table.get("address") {
+                        address.as_str()
+                    } else {
+                        //if host not found in config
+                        "localhost"
+                    }
+                };
+                let port = {
+                    if let Some(Value::Integer(port)) = table.get("port") {
+                        port
+                    } else {
+                        &8080
+                    }
+                };
+                let algorithm = {
+                    if let Some(Value::String(algorithm)) = table.get("algorithm") {
+                        get_algorithm(algorithm)
+                    } else {
+                        Algorithm::RoundRobin
+                    }
+                };
+                (host, port, algorithm)
             } else {
                 //if host not found in config
-                &"localhost".to_string()
-            }
-        };
-        //get port of load balancer
-        let load_balancer_port = {
-            if let Value::Integer(port) = values.get("load_balancer").unwrap().get("port").unwrap()
-            {
-                port
-            } else {
-                //if port not found in config
-                &8080
-            }
-        };
-        //get algorithm for load balancer
-        let algorithm: Algorithm = {
-            if let Value::String(algo) = values
-                .get("load_balancer")
-                .unwrap()
-                .get("algorithm")
-                .unwrap()
-            {
-                get_algorithm(algo)
-            } else {
-                //if algorithm not found in config
-                Algorithm::RoundRobin
+                ("localhost", &8080, Algorithm::RoundRobin)
             }
         };
 
@@ -87,22 +83,22 @@ impl Config {
             //list of servers
             servers: {
                 //get servers table
-                if let Value::Array(servers) = values.get("server").unwrap() {
+                if let Some(Value::Array(servers)) = values.get("server") {
                     Arc::new(
                         servers
                             .iter()
                             .map(|server| {
                                 //get server host
                                 let server_host = {
-                                    if let Value::String(address) = server.get("address").unwrap() {
-                                        address
+                                    if let Some(Value::String(address)) = server.get("address") {
+                                        address.as_str()
                                     } else {
-                                        &"localhost".to_string()
+                                        "localhost"
                                     }
                                 };
                                 //get server port
                                 let server_port = {
-                                    if let Value::Integer(port) = server.get("port").unwrap() {
+                                    if let Some(Value::Integer(port)) = server.get("port") {
                                         port
                                     } else {
                                         &3000
@@ -110,8 +106,8 @@ impl Config {
                                 };
                                 //get max connections
                                 let max_connections = *{
-                                    if let Value::Integer(max_connections) =
-                                        server.get("max_connections").unwrap()
+                                    if let Some(Value::Integer(max_connections)) =
+                                        server.get("max_connections")
                                     {
                                         max_connections
                                     } else {
@@ -120,7 +116,7 @@ impl Config {
                                 } as u32;
                                 //get weight
                                 let weight = *{
-                                    if let Value::Integer(weight) = server.get("weight").unwrap() {
+                                    if let Some(Value::Integer(weight)) = server.get("weight") {
                                         weight
                                     } else {
                                         &1
