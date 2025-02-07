@@ -41,13 +41,13 @@ pub struct Server {
 
 impl Server {
     //creates and returns a new server
-    pub fn new(uri: Uri) -> Self {
+    pub fn new(uri: Uri, max_connections: u32, weight: usize) -> Self {
         Self {
             host: uri.host().unwrap().to_string(),
             port: uri.port_u16().unwrap(),
             uri: uri,
 
-            max_connections: 100,
+            max_connections: max_connections,
             connections: 0,
             total_connections: 0,
             successful_connections: 0,
@@ -61,7 +61,7 @@ impl Server {
 
             is_alive: true,
 
-            weight: 1,
+            weight: weight,
         }
     }
 
