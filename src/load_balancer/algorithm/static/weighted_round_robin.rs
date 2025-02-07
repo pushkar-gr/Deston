@@ -1,3 +1,5 @@
+//defines weighted round robin algorithm, where servers are selected sequentially, taking their assigned weights into account. Servers with higher weights are picked more frequently
+
 use std::net::SocketAddr;
 use std::sync::Arc;
 

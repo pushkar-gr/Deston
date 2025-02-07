@@ -1,4 +1,5 @@
 //defines load balancer trait, it provies the blueprint for creating, starting and stopping load balancer. With a method to pick the next server based on given algo
+
 use std::net::SocketAddr;
 
 use crate::config::config::SyncConfig;

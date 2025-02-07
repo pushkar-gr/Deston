@@ -1,3 +1,5 @@
+//defines ip hashing, where servers are selected based on client ip address
+
 use sha2::{Digest, Sha256};
 use std::net::SocketAddr;
 use std::sync::Arc;

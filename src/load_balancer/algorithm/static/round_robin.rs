@@ -1,3 +1,5 @@
+//defines round robin algorithm, where servers are selected sequentially
+
 use crate::Arc;
 use std::net::SocketAddr;
 

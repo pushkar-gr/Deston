@@ -1,3 +1,5 @@
+//defines Config struct that holds list of structures, selected load balancer algorithm, and an algorithm object.
+
 use std::sync::{Arc, Mutex};
 
 use crate::load_balancer::algorithm::algorithm::Algorithm as AlgorithmTrait;

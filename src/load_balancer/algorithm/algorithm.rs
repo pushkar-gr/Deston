@@ -1,3 +1,5 @@
+//defines algorithm trait, it provies the blueprint for creating, and picking servers
+
 use crate::Arc;
 use std::net::SocketAddr;
 
