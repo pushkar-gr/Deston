@@ -108,19 +108,41 @@ impl Config {
                                         &3000
                                     }
                                 };
+                                //get max connections
+                                let max_connections = *{
+                                    if let Value::Integer(max_connections) =
+                                        server.get("max_connections").unwrap()
+                                    {
+                                        max_connections
+                                    } else {
+                                        &1000
+                                    }
+                                } as u32;
+                                //get weight
+                                let weight = *{
+                                    if let Value::Integer(weight) = server.get("weight").unwrap() {
+                                        weight
+                                    } else {
+                                        &1
+                                    }
+                                } as usize;
                                 //create new server object
                                 Arc::new(Mutex::new(Server::new(
                                     (server_host.to_owned() + ":" + &server_port.to_string())
                                         .parse::<Uri>()
                                         .unwrap(),
+                                    max_connections,
+                                    weight,
                                 )))
                             })
                             .collect(),
                     )
                 } else {
                     //if servers not found in config
-                    let server1 = Server::new("http://127.0.0.1:3000".parse::<Uri>().unwrap());
-                    let server2 = Server::new("http://127.0.0.1:3001".parse::<Uri>().unwrap());
+                    let server1 =
+                        Server::new("http://127.0.0.1:3000".parse::<Uri>().unwrap(), 1000, 1);
+                    let server2 =
+                        Server::new("http://127.0.0.1:3001".parse::<Uri>().unwrap(), 1000, 1);
                     Arc::new(vec![
                         Arc::new(Mutex::new(server1)),
                         Arc::new(Mutex::new(server2)),
