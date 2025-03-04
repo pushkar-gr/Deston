@@ -26,7 +26,7 @@ impl LoadBalancer for Layer7 {
     //calls Server::handle_request to forward request to the server
     async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         //load balancer address
-        let lb_address = "http://127.0.0.1:8000".parse::<Uri>().unwrap();
+        let lb_address = self.config.lock().unwrap().load_balancer_address.clone();
         let host = lb_address.host().unwrap();
         let port = lb_address.port_u16().unwrap();
 
