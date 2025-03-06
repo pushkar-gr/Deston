@@ -1,10 +1,10 @@
 //defines weighted round robin algorithm, where servers are selected sequentially, taking their assigned weights into account. Servers with higher weights are picked more frequently
 
+use crate::load_balancer::algorithm::algorithm::Algorithm;
+use crate::load_balancer::load_balancer::PickServerError;
+use crate::server::server::SyncServer;
 use std::net::SocketAddr;
 use std::sync::Arc;
-
-use crate::load_balancer::algorithm::algorithm::Algorithm;
-use crate::server::server::SyncServer;
 
 pub struct WeightedRoundRobin {
     index: usize,
@@ -26,16 +26,16 @@ impl Algorithm for WeightedRoundRobin {
         &mut self,
         servers: Arc<Vec<SyncServer>>,
         _: SocketAddr,
-    ) -> Option<(usize, SyncServer)> {
+    ) -> Result<(usize, SyncServer), PickServerError> {
         loop {
             //get server
             let server = &servers[self.index];
             //get weight of server
-            let server_weight = { server.lock().unwrap().weight };
+            let server_weight = { server.lock()?.weight };
 
             if self.curr_weight < server_weight {
                 self.curr_weight += 1;
-                return Some((self.index, server.clone()));
+                return Ok((self.index, server.clone()));
             }
             //reset weight and move to next server
             self.curr_weight = 0;

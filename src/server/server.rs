@@ -72,7 +72,7 @@ impl Server {
     ) -> Result<(), Box<dyn std::error::Error>> {
         //get host and port value from server
         let (host, port) = {
-            let server_locked = server.lock().unwrap();
+            let server_locked = server.lock().map_err(|e| format!("Failed to lock server: {}", e))?;
             (server_locked.host.clone(), server_locked.port)
         };
 
@@ -110,6 +110,7 @@ impl Server {
     ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
         //get host, port and uri value from server
         let (host, port, uri) = {
+            //let server_locked = server.lock().map_err(|e| format!("Failed to lock server: {}", e))?;
             let server_locked = server.lock().unwrap();
             (
                 server_locked.host.clone(),

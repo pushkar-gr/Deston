@@ -1,11 +1,10 @@
 //defines the Layer4 load balancer that implements the LoadBalancer trait. It manages multiple backend servers and handles Layer 4 (transport layer) requests. The load balancer listens for incoming connections, picks an appropriate server, and transfers data between the client and the selected server
 
-use hyper::Uri;
-use tokio::net::TcpListener;
-
 use crate::config::config::SyncConfig;
 use crate::load_balancer::load_balancer;
 use crate::server::server::Server;
+use hyper::Uri;
+use tokio::net::TcpListener;
 
 pub struct Layer4 {
     config: SyncConfig,
@@ -43,7 +42,7 @@ impl load_balancer::LoadBalancer for Layer4 {
                 //pick a server
                 let server = Self::pick_server(config_clone, addr)
                     .await
-                    .expect("No server");
+                    .expect("Unable to pick server");
                 //call Server::transfer_data to transfer data between server and client
                 if let Err(err) = Server::transfer_data(server, stream).await {
                     eprintln!("Error transfering data {:?}", err);

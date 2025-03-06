@@ -1,11 +1,11 @@
 //defines ip hashing, where servers are selected based on client ip address
 
+use crate::load_balancer::algorithm::algorithm::Algorithm;
+use crate::load_balancer::load_balancer::PickServerError;
+use crate::server::server::SyncServer;
 use sha2::{Digest, Sha256};
 use std::net::SocketAddr;
 use std::sync::Arc;
-
-use crate::load_balancer::algorithm::algorithm::Algorithm;
-use crate::server::server::SyncServer;
 
 pub struct IpHashing {}
 
@@ -24,15 +24,15 @@ impl Algorithm for IpHashing {
         &mut self,
         servers: Arc<Vec<SyncServer>>,
         client_addr: SocketAddr,
-    ) -> Option<(usize, SyncServer)> {
+    ) -> Result<(usize, SyncServer), PickServerError> {
         //create hasher
         let mut hasher = Sha256::new();
         //hash client_addr
         hasher.update(client_addr.to_string().as_bytes());
         let result = hasher.finalize();
         //get index from result
-        let index = (usize::from_be_bytes(result[0..8].try_into().unwrap())) % servers.len();
+        let index = (usize::from_be_bytes(result[0..8].try_into()?)) % servers.len();
         //return index and server
-        Some((index, servers[index].clone()))
+        Ok((index, servers[index].clone()))
     }
 }

@@ -12,6 +12,6 @@ use std::sync::{Arc, Mutex};
 #[tokio::main]
 async fn main() {
     let config = Config::new(Path::new("config.toml"));
-    let lb = Layer4::new(Arc::new(Mutex::new(config)));
+    let lb = Layer7::new(Arc::new(Mutex::new(config)));
     let _ = lb.start().await;
 }

@@ -1,14 +1,13 @@
 //defines the Layer 7 Load Balancer that implements the LoadBalancer trait. It listens for incoming HTTP requests, selects an appropriate server, and forwards the requests to the chosen server
 
+use crate::config::config::SyncConfig;
+use crate::load_balancer::load_balancer::LoadBalancer;
+use crate::server::server::Server;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::Uri;
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
-
-use crate::config::config::SyncConfig;
-use crate::load_balancer::load_balancer::LoadBalancer;
-use crate::server::server::Server;
 
 pub struct Layer7 {
     config: SyncConfig,
@@ -58,7 +57,7 @@ impl LoadBalancer for Layer7 {
                                 let config_clone = config_clone.clone();
                                 let server = Self::pick_server(config_clone, addr)
                                     .await
-                                    .expect("No server");
+                                    .expect("Unable to pick server");
                                 //call Server::handle_request to forward the request to server
                                 Server::handle_request(server, req, addr).await
                             }
