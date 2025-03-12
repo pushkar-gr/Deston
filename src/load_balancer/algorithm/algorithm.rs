@@ -2,11 +2,8 @@
 
 use crate::load_balancer::load_balancer::PickServerError;
 use crate::server::server::SyncServer;
-use std::array::TryFromSliceError;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::sync::{MutexGuard, PoisonError};
-use thiserror::Error;
 
 pub trait Algorithm: Send {
     //returns new Algorithm struct

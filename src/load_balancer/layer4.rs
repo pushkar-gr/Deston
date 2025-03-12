@@ -3,7 +3,6 @@
 use crate::config::config::SyncConfig;
 use crate::load_balancer::load_balancer;
 use crate::server::server::Server;
-use hyper::Uri;
 use tokio::net::TcpListener;
 
 pub struct Layer4 {

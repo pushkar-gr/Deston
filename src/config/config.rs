@@ -1,16 +1,15 @@
 //defines Config struct that holds list of structures, selected load balancer algorithm, and an algorithm object.
 
-use hyper::Uri;
-use std::fs;
-use std::path::Path;
-use std::sync::{Arc, Mutex};
-use toml::{Table, Value};
-
 use crate::load_balancer::algorithm::algorithm::Algorithm as AlgorithmTrait;
 use crate::load_balancer::algorithm::r#static::{
     ip_hashing::IpHashing, round_robin::RoundRobin, weighted_round_robin::WeightedRoundRobin,
 };
 use crate::server::server::{Server, SyncServer};
+use hyper::Uri;
+use std::fs;
+use std::path::Path;
+use std::sync::{Arc, Mutex};
+use toml::{Table, Value};
 
 //type alias for a thread-safe, synchronized Config using Arc and Mutex
 pub type SyncConfig = Arc<Mutex<Config>>;
