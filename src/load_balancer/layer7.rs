@@ -3,9 +3,11 @@
 use crate::config::config::SyncConfig;
 use crate::load_balancer::load_balancer::LoadBalancer;
 use crate::server::server::Server;
+use http_body_util::{BodyExt, Full};
+use hyper::body::Incoming;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
-use hyper::Uri;
+use hyper::Request;
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
@@ -49,17 +51,31 @@ impl LoadBalancer for Layer7 {
                     //bind the incoming connection to handle_request
                     .serve_connection(
                         io,
-                        service_fn(move |req| {
+                        service_fn(move |req: Request<Incoming>| {
                             //clone the server list to safely share across multiple threads
                             let config_clone = config_clone.clone();
                             async move {
-                                //pick a server
-                                let config_clone = config_clone.clone();
-                                let server = Self::pick_server(config_clone, addr)
-                                    .await
-                                    .expect("Unable to pick server");
-                                //call Server::handle_request to forward the request to server
-                                Server::handle_request(server, req, addr).await
+                                //convert request<Incoming> to request<Full<Bytes>>
+                                let (parts, body) = req.into_parts();
+                                let body = body.collect().await?.to_bytes();
+                                let req = Request::from_parts(parts, Full::new(body));
+
+                                //run loop for fault tolerance
+                                loop {
+                                    //pick a server
+                                    let config_clone = config_clone.clone();
+                                    let server = Self::pick_server(config_clone.clone(), addr)
+                                        .await
+                                        .expect("No server");
+
+                                    //call Server::handle_request to forward the request to server
+                                    let res =
+                                        Server::handle_request(server, req.clone(), addr).await;
+                                    //return response if succuss, else pick new server
+                                    if res.is_ok() {
+                                        return res;
+                                    }
+                                }
                             }
                         }),
                     )
