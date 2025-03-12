@@ -1,20 +1,43 @@
 //defines the Server struct and methods for creating servers, handling data transfers between clients and servers, and forwarding HTTP requests
 
 use http::header::{HeaderValue, FORWARDED};
-use http_body_util::{combinators::BoxBody, BodyExt};
-use hyper::body::{Bytes, Incoming};
+use http_body_util::{combinators::BoxBody, BodyExt, Full};
+use hyper::body::Bytes;
 use hyper::client::conn::http1::Builder;
 use hyper::{Request, Response, Uri};
 use hyper_util::rt::TokioIo;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::SystemTime;
+use thiserror::Error;
 use tokio::io::{copy, split, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::try_join;
 
 //type alias for a thread-safe, synchronized Server using Arc and Mutex
 pub type SyncServer = Arc<Mutex<Server>>;
+
+//enum for errors returned by handle_request method
+#[derive(Debug, Error)]
+pub enum ResponseError {
+    #[error("Mutex lock poisoned: {0}")]
+    MutexPoisonError(String),
+
+    #[error("Hyper error {0}")]
+    HyperError(#[from] hyper::Error),
+
+    #[error("Invalid header value {0}")]
+    InvalidHeaderValueError(#[from] http::header::InvalidHeaderValue),
+
+    #[error("io error {0}")]
+    IoError(#[from] std::io::Error),
+}
+
+impl<T> From<PoisonError<MutexGuard<'_, T>>> for ResponseError {
+    fn from(err: PoisonError<MutexGuard<'_, T>>) -> Self {
+        ResponseError::MutexPoisonError(err.to_string())
+    }
+}
 
 #[derive(Clone)]
 pub struct Server {
@@ -72,7 +95,9 @@ impl Server {
     ) -> Result<(), Box<dyn std::error::Error>> {
         //get host and port value from server
         let (host, port) = {
-            let server_locked = server.lock().map_err(|e| format!("Failed to lock server: {}", e))?;
+            let server_locked = server
+                .lock()
+                .map_err(|e| format!("Failed to lock server: {}", e))?;
             (server_locked.host.clone(), server_locked.port)
         };
 
@@ -105,13 +130,13 @@ impl Server {
     //returns the response from the server
     pub async fn handle_request(
         server: SyncServer,
-        mut req: Request<Incoming>,
+        mut req: Request<Full<Bytes>>,
         addr: SocketAddr,
-    ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+    ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, ResponseError> {
         //get host, port and uri value from server
         let (host, port, uri) = {
             //let server_locked = server.lock().map_err(|e| format!("Failed to lock server: {}", e))?;
-            let server_locked = server.lock().unwrap();
+            let server_locked = server.lock()?;
             (
                 server_locked.host.clone(),
                 server_locked.port,
@@ -122,7 +147,7 @@ impl Server {
         //update the headers
         let headers = req.headers_mut();
         //update host in header
-        let new_host_header = HeaderValue::from_str(host.as_str()).unwrap();
+        let new_host_header = HeaderValue::from_str(host.as_str())?;
         headers.insert("host", new_host_header);
         //add FORWARDED to the headers
         headers.insert(
@@ -140,12 +165,11 @@ impl Server {
                     "http1"
                 )
                 .as_str(),
-            )
-            .unwrap(),
+            )?,
         );
 
         //create a new stream to communicate with server
-        let stream = TcpStream::connect((host.as_str(), port)).await.unwrap();
+        let stream = TcpStream::connect((host.as_str(), port)).await?;
         let io = TokioIo::new(stream);
 
         //create an Hyper client
