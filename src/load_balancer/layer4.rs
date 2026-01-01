@@ -1,4 +1,7 @@
-//defines the Layer4 load balancer that implements the LoadBalancer trait. It manages multiple backend servers and handles Layer 4 (transport layer) requests. The load balancer listens for incoming connections, picks an appropriate server, and transfers data between the client and the selected server
+//! Layer 4 (TCP) load balancer implementation.
+//!
+//! This module provides a Layer 4 load balancer that operates at the transport layer,
+//! forwarding raw TCP connections between clients and backend servers.
 
 use tokio::net::TcpListener;
 
@@ -6,6 +9,7 @@ use crate::config::config::SyncConfig;
 use crate::load_balancer::load_balancer;
 use crate::server::server::Server;
 
+/// Layer 4 (TCP) Load Balancer
 pub struct Layer4 {
     config: SyncConfig,
 }

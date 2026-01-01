@@ -1,4 +1,8 @@
-//defines Config struct that holds list of structures, selected load balancer algorithm, and an algorithm object.
+//! Configuration module for the Deston load balancer.
+//!
+//! This module handles parsing and managing configuration from TOML files.
+//! It defines the configuration structure including load balancer settings,
+//! backend servers, and algorithm selection.
 
 use hyper::Uri;
 use std::fs;
@@ -15,7 +19,7 @@ use crate::server::server::{Server, SyncServer};
 //type alias for a thread-safe, synchronized Config using Arc and Mutex
 pub type SyncConfig = Arc<Mutex<Config>>;
 
-//enum for all the algorithm
+/// Load balancing algorithm options
 #[derive(Clone)]
 pub enum Algorithm {
     RoundRobin,         //round robin
@@ -23,6 +27,7 @@ pub enum Algorithm {
     IpHashing,          //ip hashing
 }
 
+/// Configuration structure for the load balancer
 pub struct Config {
     pub load_balancer_address: Uri,    //address of load balancer
     pub servers: Arc<Vec<SyncServer>>, //thread safe vector of servers
@@ -33,7 +38,7 @@ pub struct Config {
 }
 
 impl Config {
-    //creates and returns a new Config
+    /// Creates and returns a new Config from a TOML file
     pub fn new(config_path: &Path) -> Self {
         //read contents of config file
         let contents = fs::read_to_string(config_path).unwrap();

@@ -1,4 +1,6 @@
-//defines round robin algorithm, where servers are selected sequentially
+//! Round Robin load balancing algorithm.
+//!
+//! Distributes requests evenly across all servers in a sequential, circular fashion.
 
 use crate::Arc;
 use std::net::SocketAddr;
@@ -6,6 +8,7 @@ use std::net::SocketAddr;
 use crate::load_balancer::algorithm::algorithm::Algorithm;
 use crate::server::server::SyncServer;
 
+/// Round Robin algorithm implementation
 pub struct RoundRobin {
     index: usize,
 }

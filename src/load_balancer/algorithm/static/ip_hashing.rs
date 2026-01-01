@@ -1,4 +1,7 @@
-//defines ip hashing, where servers are selected based on client ip address
+//! IP Hashing load balancing algorithm.
+//!
+//! Uses consistent hashing based on client IP addresses to ensure the same client
+//! is always routed to the same backend server, providing session affinity.
 
 use sha2::{Digest, Sha256};
 use std::net::SocketAddr;
@@ -7,6 +10,7 @@ use std::sync::Arc;
 use crate::load_balancer::algorithm::algorithm::Algorithm;
 use crate::server::server::SyncServer;
 
+/// IP Hashing algorithm implementation
 pub struct IpHashing {}
 
 impl Algorithm for IpHashing {

@@ -1,17 +1,22 @@
-//defines algorithm trait, it provies the blueprint for creating, and picking servers
+//! Algorithm trait definition.
+//!
+//! This module defines the Algorithm trait that all load balancing algorithms must implement.
 
 use crate::Arc;
 use std::net::SocketAddr;
 
 use crate::server::server::SyncServer;
 
+/// Algorithm trait for load balancing strategies
 pub trait Algorithm: Send {
-    //returns new Algorithm struct
+    /// Creates a new instance of the algorithm
     fn new() -> Self
     where
         Self: Sized;
 
-    //picks server based on algorithm and returns server index and server. returns None if no server available
+    /// Picks a server based on the algorithm's strategy
+    ///
+    /// Returns Some((index, server)) if a server is available, None otherwise
     fn pick_server(
         &mut self,
         servers: Arc<Vec<SyncServer>>,

@@ -1,4 +1,7 @@
-//defines the Layer 7 Load Balancer that implements the LoadBalancer trait. It listens for incoming HTTP requests, selects an appropriate server, and forwards the requests to the chosen server
+//! Layer 7 (HTTP) load balancer implementation.
+//!
+//! This module provides a Layer 7 load balancer that operates at the application layer,
+//! forwarding HTTP requests with the ability to inspect and modify headers.
 
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
@@ -9,6 +12,7 @@ use crate::config::config::SyncConfig;
 use crate::load_balancer::load_balancer::LoadBalancer;
 use crate::server::server::Server;
 
+/// Layer 7 (HTTP) Load Balancer
 #[allow(dead_code)]
 pub struct Layer7 {
     config: SyncConfig,

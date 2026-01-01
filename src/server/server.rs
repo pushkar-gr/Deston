@@ -1,4 +1,7 @@
-//defines the Server struct and methods for creating servers, handling data transfers between clients and servers, and forwarding HTTP requests
+//! Backend server management and request handling.
+//!
+//! This module defines the Server struct and provides methods for handling
+//! both Layer 4 (TCP) and Layer 7 (HTTP) connections.
 
 use http::header::{HeaderValue, FORWARDED};
 use http_body_util::{combinators::BoxBody, BodyExt};
@@ -16,6 +19,7 @@ use tokio::try_join;
 //type alias for a thread-safe, synchronized Server using Arc and Mutex
 pub type SyncServer = Arc<Mutex<Server>>;
 
+/// Backend server representation with connection tracking and health metrics
 #[derive(Clone)]
 pub struct Server {
     #[allow(dead_code)]

@@ -1,4 +1,7 @@
-//defines weighted round robin algorithm, where servers are selected sequentially, taking their assigned weights into account. Servers with higher weights are picked more frequently
+//! Weighted Round Robin load balancing algorithm.
+//!
+//! Distributes requests based on server weights. Servers with higher weights
+//! receive proportionally more requests.
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -6,6 +9,7 @@ use std::sync::Arc;
 use crate::load_balancer::algorithm::algorithm::Algorithm;
 use crate::server::server::SyncServer;
 
+/// Weighted Round Robin algorithm implementation
 pub struct WeightedRoundRobin {
     index: usize,
     curr_weight: usize,

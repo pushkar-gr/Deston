@@ -3,6 +3,14 @@ name = "Deston"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "Deston"
+path = "src/lib.rs"
+
+[[bin]]
+name = "Deston"
+path = "src/main.rs"
+
 [dependencies]
 hyper = { version = "1", features = ["full"] }
 tokio = { version = "1", features = ["full"] }

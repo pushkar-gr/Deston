@@ -1,20 +1,24 @@
-//defines load balancer trait, it provies the blueprint for creating, starting and stopping load balancer. With a method to pick the next server based on given algo
+//! Load balancer trait and implementations.
+//!
+//! This module defines the core LoadBalancer trait and provides implementations
+//! for Layer 4 (TCP) and Layer 7 (HTTP) load balancing.
 
 use std::net::SocketAddr;
 
 use crate::config::config::SyncConfig;
 use crate::server::server::SyncServer;
 
+/// LoadBalancer trait defining the interface for load balancer implementations
 pub trait LoadBalancer {
-    //returns a LoadBalancer
+    /// Creates a new LoadBalancer with the given configuration
     fn new(config: SyncConfig) -> Self;
 
-    //starts the load balancer
+    /// Starts the load balancer and begins accepting connections
     async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
-    //picks a server based on algo to handle incoming request
-    //returns an option of server if server available
-    //returns None if no servers are available
+    /// Picks a server based on the configured algorithm to handle an incoming request
+    ///
+    /// Returns Some(server) if a server is available, None otherwise
     async fn pick_server(config: SyncConfig, client_addr: SocketAddr) -> Option<SyncServer> {
         //lock config
         let mut config = config.lock().unwrap();
