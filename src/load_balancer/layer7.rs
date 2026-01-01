@@ -1,8 +1,10 @@
-//defines the Layer 7 Load Balancer that implements the LoadBalancer trait. It listens for incoming HTTP requests, selects an appropriate server, and forwards the requests to the chosen server
+//! Layer 7 (HTTP) load balancer implementation.
+//!
+//! This module provides a Layer 7 load balancer that operates at the application layer,
+//! forwarding HTTP requests with the ability to inspect and modify headers.
 
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
-use hyper::Uri;
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
@@ -10,6 +12,8 @@ use crate::config::config::SyncConfig;
 use crate::load_balancer::load_balancer::LoadBalancer;
 use crate::server::server::Server;
 
+/// Layer 7 (HTTP) Load Balancer
+#[allow(dead_code)]
 pub struct Layer7 {
     config: SyncConfig,
 }
@@ -25,15 +29,18 @@ impl LoadBalancer for Layer7 {
     //calls pick_server to pick a server when user sends a request
     //calls Server::handle_request to forward request to the server
     async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        //load balancer address
-        let lb_address = "http://127.0.0.1:8000".parse::<Uri>().unwrap();
+        //load balancer address from config
+        let lb_address = {
+            let config = self.config.lock().unwrap();
+            config.load_balancer_address.clone()
+        };
         let host = lb_address.host().unwrap();
         let port = lb_address.port_u16().unwrap();
 
         //create a TcpListener and binds it to load balancer address
         let listener = TcpListener::bind((host, port)).await?;
 
-        //loop to continuously accetp incoming connections
+        //loop to continuously accept incoming connections
         loop {
             //accept incoming connections
             let (stream, addr) = listener.accept().await?;

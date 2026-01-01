@@ -1,4 +1,8 @@
-//defines Config struct that holds list of structures, selected load balancer algorithm, and an algorithm object.
+//! Configuration module for the Deston load balancer.
+//!
+//! This module handles parsing and managing configuration from TOML files.
+//! It defines the configuration structure including load balancer settings,
+//! backend servers, and algorithm selection.
 
 use hyper::Uri;
 use std::fs;
@@ -15,7 +19,7 @@ use crate::server::server::{Server, SyncServer};
 //type alias for a thread-safe, synchronized Config using Arc and Mutex
 pub type SyncConfig = Arc<Mutex<Config>>;
 
-//enum for all the algorithm
+/// Load balancing algorithm options
 #[derive(Clone)]
 pub enum Algorithm {
     RoundRobin,         //round robin
@@ -23,24 +27,34 @@ pub enum Algorithm {
     IpHashing,          //ip hashing
 }
 
+/// Load balancer layer mode
+#[derive(Clone, Debug, PartialEq)]
+pub enum LayerMode {
+    L4, // Layer 4 (TCP) load balancer
+    L7, // Layer 7 (HTTP) load balancer
+}
+
+/// Configuration structure for the load balancer
 pub struct Config {
     pub load_balancer_address: Uri,    //address of load balancer
     pub servers: Arc<Vec<SyncServer>>, //thread safe vector of servers
-    pub algorithm: Algorithm,          //algorithm to pick server
+    #[allow(dead_code)]
+    pub algorithm: Algorithm, //algorithm to pick server
     pub last_picked_index: usize,      //index of last picked server
     pub algorithm_object: Box<dyn AlgorithmTrait>, //algorithm object
+    pub layer_mode: LayerMode,         //layer mode (L4 or L7)
 }
 
 impl Config {
-    //creates and returns a new Config
+    /// Creates and returns a new Config from a TOML file
     pub fn new(config_path: &Path) -> Self {
         //read contents of config file
         let contents = fs::read_to_string(config_path).unwrap();
-        //parese config file contents
+        //parse config file contents
         let values = contents.parse::<Table>().unwrap();
 
         //get host name, port and algorithm of load balancer
-        let (load_balancer_host, load_balancer_port, algorithm) = {
+        let (load_balancer_host, load_balancer_port, algorithm, layer_mode) = {
             if let Some(table) = values.get("load_balancer") {
                 let host = {
                     if let Some(Value::String(address)) = table.get("address") {
@@ -64,10 +78,17 @@ impl Config {
                         Algorithm::RoundRobin
                     }
                 };
-                (host, port, algorithm)
+                let layer = {
+                    if let Some(Value::String(layer)) = table.get("layer") {
+                        get_layer_mode(layer)
+                    } else {
+                        LayerMode::L4 // Default to L4 for backward compatibility
+                    }
+                };
+                (host, port, algorithm, layer)
             } else {
                 //if host not found in config
-                ("localhost", &8080, Algorithm::RoundRobin)
+                ("localhost", &8080, Algorithm::RoundRobin, LayerMode::L4)
             }
         };
 
@@ -153,21 +174,35 @@ impl Config {
                     Algorithm::IpHashing => Box::new(IpHashing::new()),
                 }
             },
-            algorithm: algorithm,
+            algorithm,
             last_picked_index: 0,
+            layer_mode,
         }
     }
 }
 
-//funciton to get Algorithm from string
-fn get_algorithm(algorithm: &String) -> Algorithm {
-    if algorithm == "RoundRobin" {
+//function to get Algorithm from string (case-insensitive)
+fn get_algorithm(algorithm: &str) -> Algorithm {
+    let algo_lower = algorithm.to_lowercase();
+    if algo_lower == "roundrobin" || algo_lower == "round_robin" {
         Algorithm::RoundRobin
-    } else if algorithm == "WeightedRoundRobin" {
+    } else if algo_lower == "weightedroundrobin" || algo_lower == "weighted_round_robin" {
         Algorithm::WeightedRoundRobin
-    } else if algorithm == "IpHashing" {
+    } else if algo_lower == "iphashing" || algo_lower == "ip_hashing" {
         Algorithm::IpHashing
     } else {
         Algorithm::RoundRobin
+    }
+}
+
+//function to get LayerMode from string (case-insensitive)
+fn get_layer_mode(layer: &str) -> LayerMode {
+    let layer_lower = layer.to_lowercase();
+    if layer_lower == "l4" || layer_lower == "layer4" || layer_lower == "layer_4" {
+        LayerMode::L4
+    } else if layer_lower == "l7" || layer_lower == "layer7" || layer_lower == "layer_7" {
+        LayerMode::L7
+    } else {
+        LayerMode::L4 // Default to L4
     }
 }

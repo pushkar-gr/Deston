@@ -66,21 +66,48 @@ cargo run --release
 ```
 
 ### Configuration
-Modify `config.toml` to add servers, specify load-balancing algorithms, etc.:
+Modify `config.toml` to configure the load balancer settings:
+
 ```toml
 [load_balancer]
 address = "127.0.0.1"
 port = 8080
-algorithm = "RoundRobin"
+algorithm = "round_robin"  # Options: "round_robin", "weighted_round_robin", "ip_hashing"
+layer = "L4"                # Options: "L4" (TCP), "L7" (HTTP)
 
 [[server]]
-address = "http://127.0.0.1:3000"
+address = "127.0.0.1"
 port = 3000
+max_connections = 1000
+weight = 1
 
 [[server]]
-address = "http://127.0.0.1:3001"
+address = "127.0.0.1"
 port = 3001
+max_connections = 1000
+weight = 1
 ```
+
+#### Configuration Options
+
+- **layer**: Choose between Layer 4 (TCP) or Layer 7 (HTTP) load balancing
+  - `"L4"` (default): Transport layer (TCP) load balancing
+  - `"L7"`: Application layer (HTTP) load balancing
+  - Case-insensitive: accepts `"l4"`, `"L4"`, `"layer4"`, `"Layer_4"`, etc.
+
+- **algorithm**: Load balancing algorithm
+  - `"round_robin"`: Distributes requests equally across servers
+  - `"weighted_round_robin"`: Distributes based on server weights
+  - `"ip_hashing"`: Routes requests from the same IP to the same server
+  - Case-insensitive
+
+- **address** and **port**: The address where the load balancer listens
+
+- **server**: Backend server configuration
+  - `address`: Server IP address
+  - `port`: Server port
+  - `max_connections`: Maximum concurrent connections
+  - `weight`: Server weight (used with weighted_round_robin)
 
 ---
 

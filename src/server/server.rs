@@ -1,4 +1,7 @@
-//defines the Server struct and methods for creating servers, handling data transfers between clients and servers, and forwarding HTTP requests
+//! Backend server management and request handling.
+//!
+//! This module defines the Server struct and provides methods for handling
+//! both Layer 4 (TCP) and Layer 7 (HTTP) connections.
 
 use http::header::{HeaderValue, FORWARDED};
 use http_body_util::{combinators::BoxBody, BodyExt};
@@ -16,24 +19,36 @@ use tokio::try_join;
 //type alias for a thread-safe, synchronized Server using Arc and Mutex
 pub type SyncServer = Arc<Mutex<Server>>;
 
+/// Backend server representation with connection tracking and health metrics
 #[derive(Clone)]
 pub struct Server {
-    uri: Uri,     //uri of server
+    #[allow(dead_code)]
+    uri: Uri, //uri of server
     host: String, //hostname of server
     port: u16,    //port at which server is running
 
-    max_connections: u32,        //max connections server can handle
-    connections: u32,            //number of alive connections
-    total_connections: u32,      //total connections server has served
-    successful_connections: u32, //total successful connections server has sesrved
-    failed_connections: u32,     //total failed connections
+    #[allow(dead_code)]
+    max_connections: u32, //max connections server can handle
+    #[allow(dead_code)]
+    connections: u32, //number of alive connections
+    #[allow(dead_code)]
+    total_connections: u32, //total connections server has served
+    #[allow(dead_code)]
+    successful_connections: u32, //total successful connections server has served
+    #[allow(dead_code)]
+    failed_connections: u32, //total failed connections
 
+    #[allow(dead_code)]
     last_request_time: SystemTime, //time of latest request
+    #[allow(dead_code)]
     last_health_check: SystemTime, //time of latest health check
 
-    response_time: f64,     //last response time
-    avg_response_time: f64, //avegage response time
+    #[allow(dead_code)]
+    response_time: f64, //last response time
+    #[allow(dead_code)]
+    avg_response_time: f64, //average response time
 
+    #[allow(dead_code)]
     is_alive: bool, //is server alive?
 
     pub weight: usize, //for weighted algorithms
@@ -45,9 +60,9 @@ impl Server {
         Self {
             host: uri.host().unwrap().to_string(),
             port: uri.port_u16().unwrap(),
-            uri: uri,
+            uri,
 
-            max_connections: max_connections,
+            max_connections,
             connections: 0,
             total_connections: 0,
             successful_connections: 0,
@@ -61,7 +76,7 @@ impl Server {
 
             is_alive: true,
 
-            weight: weight,
+            weight,
         }
     }
 
@@ -95,7 +110,7 @@ impl Server {
             client_write.shutdown().await
         });
 
-        //run both diretions concurrently
+        //run both directions concurrently
         let _ = try_join!(client_to_server, server_to_server)?;
 
         Ok(())
@@ -103,6 +118,7 @@ impl Server {
 
     //handle_request handles incoming request and forwards it to a server
     //returns the response from the server
+    #[allow(dead_code)]
     pub async fn handle_request(
         server: SyncServer,
         mut req: Request<Incoming>,
@@ -134,7 +150,7 @@ impl Server {
                     //for: client address
                     addr,
                     //host: server address
-                    uri.to_string(),
+                    uri,
                     //prototype: http1
                     "http1"
                 )

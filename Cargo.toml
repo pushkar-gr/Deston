@@ -1,7 +1,15 @@
 [package]
-name = "Deston"
+name = "deston"
 version = "0.1.0"
 edition = "2021"
+
+[lib]
+name = "deston"
+path = "src/lib.rs"
+
+[[bin]]
+name = "deston"
+path = "src/main.rs"
 
 [dependencies]
 hyper = { version = "1", features = ["full"] }
