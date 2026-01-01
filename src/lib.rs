@@ -13,9 +13,9 @@
 //! ## Example
 //!
 //! ```no_run
-//! use Deston::config::config::Config;
-//! use Deston::load_balancer::load_balancer::LoadBalancer;
-//! use Deston::load_balancer::layer4::Layer4;
+//! use deston::config::config::Config;
+//! use deston::load_balancer::load_balancer::LoadBalancer;
+//! use deston::load_balancer::layer4::Layer4;
 //! use std::path::Path;
 //! use std::sync::{Arc, Mutex};
 //!

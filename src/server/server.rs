@@ -60,9 +60,9 @@ impl Server {
         Self {
             host: uri.host().unwrap().to_string(),
             port: uri.port_u16().unwrap(),
-            uri: uri,
+            uri,
 
-            max_connections: max_connections,
+            max_connections,
             connections: 0,
             total_connections: 0,
             successful_connections: 0,
@@ -76,7 +76,7 @@ impl Server {
 
             is_alive: true,
 
-            weight: weight,
+            weight,
         }
     }
 
@@ -150,7 +150,7 @@ impl Server {
                     //for: client address
                     addr,
                     //host: server address
-                    uri.to_string(),
+                    uri,
                     //prototype: http1
                     "http1"
                 )

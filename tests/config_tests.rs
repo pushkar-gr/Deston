@@ -1,6 +1,6 @@
+use deston::config::config::{Algorithm, Config, LayerMode};
 use std::fs;
 use std::path::Path;
-use Deston::config::config::{Algorithm, Config};
 
 #[test]
 fn test_config_parsing_basic() {
@@ -147,6 +147,124 @@ weight = 3
     assert_eq!(config.servers[0].lock().unwrap().weight, 1);
     assert_eq!(config.servers[1].lock().unwrap().weight, 2);
     assert_eq!(config.servers[2].lock().unwrap().weight, 3);
+
+    // Clean up
+    fs::remove_file(config_path).ok();
+}
+
+#[test]
+fn test_config_layer_mode_l4() {
+    let config_content = r#"
+[load_balancer]
+address = "127.0.0.1"
+port = 8080
+algorithm = "round_robin"
+layer = "L4"
+
+[[server]]
+address = "127.0.0.1"
+port = 3000
+"#;
+
+    let config_path = "/tmp/test_config_layer_l4.toml";
+    fs::write(config_path, config_content).unwrap();
+
+    let config = Config::new(Path::new(config_path));
+
+    assert_eq!(config.layer_mode, LayerMode::L4);
+
+    // Clean up
+    fs::remove_file(config_path).ok();
+}
+
+#[test]
+fn test_config_layer_mode_l7() {
+    let config_content = r#"
+[load_balancer]
+address = "127.0.0.1"
+port = 8080
+algorithm = "round_robin"
+layer = "L7"
+
+[[server]]
+address = "127.0.0.1"
+port = 3000
+"#;
+
+    let config_path = "/tmp/test_config_layer_l7.toml";
+    fs::write(config_path, config_content).unwrap();
+
+    let config = Config::new(Path::new(config_path));
+
+    assert_eq!(config.layer_mode, LayerMode::L7);
+
+    // Clean up
+    fs::remove_file(config_path).ok();
+}
+
+#[test]
+fn test_config_layer_mode_case_insensitive() {
+    let test_cases = vec![
+        ("l4", LayerMode::L4),
+        ("L4", LayerMode::L4),
+        ("layer4", LayerMode::L4),
+        ("Layer4", LayerMode::L4),
+        ("layer_4", LayerMode::L4),
+        ("l7", LayerMode::L7),
+        ("L7", LayerMode::L7),
+        ("layer7", LayerMode::L7),
+        ("Layer7", LayerMode::L7),
+        ("layer_7", LayerMode::L7),
+    ];
+
+    for (layer_str, expected_mode) in test_cases {
+        let config_content = format!(
+            r#"
+[load_balancer]
+address = "127.0.0.1"
+port = 8080
+algorithm = "round_robin"
+layer = "{}"
+
+[[server]]
+address = "127.0.0.1"
+port = 3000
+"#,
+            layer_str
+        );
+
+        let config_path = format!("/tmp/test_config_layer_{}.toml", layer_str.replace("_", ""));
+        fs::write(&config_path, config_content).unwrap();
+
+        let config = Config::new(Path::new(&config_path));
+        assert_eq!(config.layer_mode, expected_mode);
+
+        // Clean up
+        fs::remove_file(&config_path).ok();
+    }
+}
+
+#[test]
+fn test_config_layer_mode_default() {
+    // Config without layer specified should default to L4
+    let config_content = r#"
+[load_balancer]
+address = "127.0.0.1"
+port = 8080
+algorithm = "round_robin"
+
+[[server]]
+address = "127.0.0.1"
+port = 3000
+"#;
+
+    let config_path = "/tmp/test_config_layer_default.toml";
+    fs::write(config_path, config_content).unwrap();
+
+    let config = Config::new(Path::new(config_path));
+
+    // Should default to L4
+    assert_eq!(config.layer_mode, LayerMode::L4);
 
     // Clean up
     fs::remove_file(config_path).ok();

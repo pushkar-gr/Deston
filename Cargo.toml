@@ -1,14 +1,14 @@
 [package]
-name = "Deston"
+name = "deston"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "Deston"
+name = "deston"
 path = "src/lib.rs"
 
 [[bin]]
-name = "Deston"
+name = "deston"
 path = "src/main.rs"
 
 [dependencies]

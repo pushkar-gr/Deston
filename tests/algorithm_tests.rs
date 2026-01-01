@@ -2,12 +2,12 @@ use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
 // Import algorithm modules from main crate
-use hyper::Uri;
-use Deston::load_balancer::algorithm::algorithm::Algorithm;
-use Deston::load_balancer::algorithm::r#static::{
+use deston::load_balancer::algorithm::algorithm::Algorithm;
+use deston::load_balancer::algorithm::r#static::{
     ip_hashing::IpHashing, round_robin::RoundRobin, weighted_round_robin::WeightedRoundRobin,
 };
-use Deston::server::server::Server;
+use deston::server::server::Server;
+use hyper::Uri;
 
 // Helper function to create test servers
 fn create_test_servers(count: usize, weights: Option<Vec<usize>>) -> Arc<Vec<Arc<Mutex<Server>>>> {

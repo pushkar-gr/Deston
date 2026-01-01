@@ -9,6 +9,7 @@ use crate::config::config::SyncConfig;
 use crate::server::server::SyncServer;
 
 /// LoadBalancer trait defining the interface for load balancer implementations
+#[allow(async_fn_in_trait)]
 pub trait LoadBalancer {
     /// Creates a new LoadBalancer with the given configuration
     fn new(config: SyncConfig) -> Self;
