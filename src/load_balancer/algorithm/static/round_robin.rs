@@ -29,7 +29,7 @@ impl Algorithm for RoundRobin {
         //pick server
         let server = servers[self.index].clone();
         let index = self.index;
-        //incriment index
+        //increment index
         self.index = (self.index + 1) % servers.len();
         //return index and server
         Some((index, server))

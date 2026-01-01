@@ -20,7 +20,7 @@ pub trait LoadBalancer {
         let mut config = config.lock().unwrap();
         //get servers
         let servers = config.servers.clone();
-        //call AlgoRithm::pick_server and return the server
+        //call Algorithm::pick_server and return the server
         let (index, server) = config
             .algorithm_object
             .pick_server(servers, client_addr)
@@ -32,5 +32,6 @@ pub trait LoadBalancer {
     }
 
     //stops the load balancer
+    #[allow(dead_code)]
     fn stop(&self);
 }

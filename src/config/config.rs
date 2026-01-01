@@ -26,7 +26,8 @@ pub enum Algorithm {
 pub struct Config {
     pub load_balancer_address: Uri,    //address of load balancer
     pub servers: Arc<Vec<SyncServer>>, //thread safe vector of servers
-    pub algorithm: Algorithm,          //algorithm to pick server
+    #[allow(dead_code)]
+    pub algorithm: Algorithm, //algorithm to pick server
     pub last_picked_index: usize,      //index of last picked server
     pub algorithm_object: Box<dyn AlgorithmTrait>, //algorithm object
 }
@@ -36,7 +37,7 @@ impl Config {
     pub fn new(config_path: &Path) -> Self {
         //read contents of config file
         let contents = fs::read_to_string(config_path).unwrap();
-        //parese config file contents
+        //parse config file contents
         let values = contents.parse::<Table>().unwrap();
 
         //get host name, port and algorithm of load balancer
@@ -159,13 +160,14 @@ impl Config {
     }
 }
 
-//funciton to get Algorithm from string
+//function to get Algorithm from string (case-insensitive)
 fn get_algorithm(algorithm: &String) -> Algorithm {
-    if algorithm == "RoundRobin" {
+    let algo_lower = algorithm.to_lowercase();
+    if algo_lower == "roundrobin" || algo_lower == "round_robin" {
         Algorithm::RoundRobin
-    } else if algorithm == "WeightedRoundRobin" {
+    } else if algo_lower == "weightedroundrobin" || algo_lower == "weighted_round_robin" {
         Algorithm::WeightedRoundRobin
-    } else if algorithm == "IpHashing" {
+    } else if algo_lower == "iphashing" || algo_lower == "ip_hashing" {
         Algorithm::IpHashing
     } else {
         Algorithm::RoundRobin

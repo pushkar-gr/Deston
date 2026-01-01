@@ -18,22 +18,33 @@ pub type SyncServer = Arc<Mutex<Server>>;
 
 #[derive(Clone)]
 pub struct Server {
-    uri: Uri,     //uri of server
+    #[allow(dead_code)]
+    uri: Uri, //uri of server
     host: String, //hostname of server
     port: u16,    //port at which server is running
 
-    max_connections: u32,        //max connections server can handle
-    connections: u32,            //number of alive connections
-    total_connections: u32,      //total connections server has served
-    successful_connections: u32, //total successful connections server has sesrved
-    failed_connections: u32,     //total failed connections
+    #[allow(dead_code)]
+    max_connections: u32, //max connections server can handle
+    #[allow(dead_code)]
+    connections: u32, //number of alive connections
+    #[allow(dead_code)]
+    total_connections: u32, //total connections server has served
+    #[allow(dead_code)]
+    successful_connections: u32, //total successful connections server has served
+    #[allow(dead_code)]
+    failed_connections: u32, //total failed connections
 
+    #[allow(dead_code)]
     last_request_time: SystemTime, //time of latest request
+    #[allow(dead_code)]
     last_health_check: SystemTime, //time of latest health check
 
-    response_time: f64,     //last response time
-    avg_response_time: f64, //avegage response time
+    #[allow(dead_code)]
+    response_time: f64, //last response time
+    #[allow(dead_code)]
+    avg_response_time: f64, //average response time
 
+    #[allow(dead_code)]
     is_alive: bool, //is server alive?
 
     pub weight: usize, //for weighted algorithms
@@ -95,7 +106,7 @@ impl Server {
             client_write.shutdown().await
         });
 
-        //run both diretions concurrently
+        //run both directions concurrently
         let _ = try_join!(client_to_server, server_to_server)?;
 
         Ok(())
@@ -103,6 +114,7 @@ impl Server {
 
     //handle_request handles incoming request and forwards it to a server
     //returns the response from the server
+    #[allow(dead_code)]
     pub async fn handle_request(
         server: SyncServer,
         mut req: Request<Incoming>,

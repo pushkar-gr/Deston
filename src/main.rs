@@ -4,7 +4,6 @@ mod server;
 use crate::load_balancer::load_balancer::LoadBalancer;
 use config::config::Config;
 use load_balancer::layer4::Layer4;
-use load_balancer::layer7::Layer7;
 use std::path::Path;
 
 use std::sync::{Arc, Mutex};
