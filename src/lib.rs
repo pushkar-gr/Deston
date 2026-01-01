@@ -23,7 +23,8 @@
 //! async fn main() {
 //!     let config = Config::new(Path::new("config.toml"));
 //!     let lb = Layer4::new(Arc::new(Mutex::new(config)));
-//!     let _ = lb.start().await;
+//!     let (_, shutdown_rx) = tokio::sync::watch::channel(false);
+//!     let _ = lb.start(shutdown_rx).await;
 //! }
 //! ```
 

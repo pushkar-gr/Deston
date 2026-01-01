@@ -15,7 +15,13 @@ pub trait LoadBalancer {
     fn new(config: SyncConfig) -> Self;
 
     /// Starts the load balancer and begins accepting connections
-    async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    ///
+    /// # Arguments
+    /// * `shutdown_rx` - A watch receiver that signals when to initiate shutdown
+    async fn start(
+        &self,
+        shutdown_rx: tokio::sync::watch::Receiver<bool>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     /// Picks a server based on the configured algorithm to handle an incoming request
     ///
@@ -35,8 +41,4 @@ pub trait LoadBalancer {
         //return picked server
         Some(server)
     }
-
-    //stops the load balancer
-    #[allow(dead_code)]
-    fn stop(&self);
 }
