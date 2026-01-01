@@ -2,9 +2,9 @@
 
 > **A High-Performance, Rust-based Layer 4 (TCP) & Layer 7 (HTTP) Load Balancer.**
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/pushkar-gr/Deston/build.yml?branch=main)](https://github.com/pushkar-gr/Deston/actions)
-[![License](https://img.shields.io/github/license/pushkar-gr/Deston)](LICENSE)
-[![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Build](https://img.shields.io/github/actions/workflow/status/pushkar-gr/Deston/rust.yml?branch=main)](https://github.com/pushkar-gr/Deston/actions)
 
 Deston is a lightweight, asynchronous load balancer built in **Rust**. It is designed for speed and flexibility, offering dual support for transport-layer (L4) and application-layer (L7) load balancing. Built on top of `tokio` and `hyper`, Deston handles high-concurrency traffic with ease.
 
