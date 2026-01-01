@@ -28,7 +28,10 @@ impl LoadBalancer for Layer7 {
     //will listen to incoming requests at given address
     //calls pick_server to pick a server when user sends a request
     //calls Server::handle_request to forward request to the server
-    async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn start(
+        &self,
+        mut shutdown_rx: tokio::sync::watch::Receiver<bool>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         //load balancer address from config
         let lb_address = {
             let config = self.config.lock().unwrap();
@@ -40,45 +43,63 @@ impl LoadBalancer for Layer7 {
         //create a TcpListener and binds it to load balancer address
         let listener = TcpListener::bind((host, port)).await?;
 
+        println!("Layer 7 Load Balancer listening on {}:{}", host, port);
+
         //loop to continuously accept incoming connections
         loop {
-            //accept incoming connections
-            let (stream, addr) = listener.accept().await?;
-            let io = TokioIo::new(stream);
-
-            //clone the server list to safely share across multiple threads
-            let config_clone = self.config.clone();
-
-            //spawn a tokio task to server multiple connections concurrently
-            tokio::task::spawn(async move {
-                if let Err(err) = http1::Builder::new()
-                    .preserve_header_case(true)
-                    .title_case_headers(true)
-                    //bind the incoming connection to handle_request
-                    .serve_connection(
-                        io,
-                        service_fn(move |req| {
-                            //clone the server list to safely share across multiple threads
-                            let config_clone = config_clone.clone();
-                            async move {
-                                //pick a server
-                                let config_clone = config_clone.clone();
-                                let server = Self::pick_server(config_clone, addr)
-                                    .await
-                                    .expect("No server");
-                                //call Server::handle_request to forward the request to server
-                                Server::handle_request(server, req, addr).await
-                            }
-                        }),
-                    )
-                    .await
-                {
-                    eprintln!("Error serving connection: {:?}", err);
+            tokio::select! {
+                // Check if shutdown signal is received
+                _ = shutdown_rx.changed() => {
+                    if *shutdown_rx.borrow() {
+                        println!("Shutdown signal received, stopping Layer 7 Load Balancer...");
+                        break;
+                    }
                 }
-            });
-        }
-    }
+                // Accept incoming connections
+                result = listener.accept() => {
+                    match result {
+                        Ok((stream, addr)) => {
+                            let io = TokioIo::new(stream);
 
-    //stops layer 7 load balancer
-    fn stop(&self) {}
+                            //clone the server list to safely share across multiple threads
+                            let config_clone = self.config.clone();
+
+                            //spawn a tokio task to server multiple connections concurrently
+                            tokio::task::spawn(async move {
+                                if let Err(err) = http1::Builder::new()
+                                    .preserve_header_case(true)
+                                    .title_case_headers(true)
+                                    //bind the incoming connection to handle_request
+                                    .serve_connection(
+                                        io,
+                                        service_fn(move |req| {
+                                            //clone the server list to safely share across multiple threads
+                                            let config_clone = config_clone.clone();
+                                            async move {
+                                                //pick a server
+                                                let config_clone = config_clone.clone();
+                                                let server = Self::pick_server(config_clone, addr)
+                                                    .await
+                                                    .expect("No server");
+                                                //call Server::handle_request to forward the request to server
+                                                Server::handle_request(server, req, addr).await
+                                            }
+                                        }),
+                                    )
+                                    .await
+                                {
+                                    eprintln!("Error serving connection: {:?}", err);
+                                }
+                            });
+                        }
+                        Err(e) => {
+                            eprintln!("Error accepting connection: {:?}", e);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
